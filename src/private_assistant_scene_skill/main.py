@@ -9,6 +9,7 @@ import paho.mqtt.client as mqtt
 import spacy
 import typer
 from homeassistant_api import Client
+from private_assistant_commons import skill_config
 
 from private_assistant_scene_skill import config, scene_skill
 
@@ -28,7 +29,7 @@ def start_skill(
         pathlib.Path, typer.Argument(envvar="PRIVATE_ASSISTANT_CONFIG_PATH")
     ],
 ):
-    config_obj = config.load_config(config_path)
+    config_obj = skill_config.load_config(config_path, config.SkillConfig)
     scene_skill_obj = scene_skill.SceneSkill(
         mqtt_client=mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,
