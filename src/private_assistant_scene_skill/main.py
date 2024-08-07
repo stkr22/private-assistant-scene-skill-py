@@ -6,7 +6,6 @@ from typing import Annotated
 
 import jinja2
 import paho.mqtt.client as mqtt
-import spacy
 import typer
 from homeassistant_api import Client
 from private_assistant_commons import skill_config
@@ -25,9 +24,7 @@ app = typer.Typer()
 
 @app.command()
 def start_skill(
-    config_path: Annotated[
-        pathlib.Path, typer.Argument(envvar="PRIVATE_ASSISTANT_CONFIG_PATH")
-    ],
+    config_path: Annotated[pathlib.Path, typer.Argument(envvar="PRIVATE_ASSISTANT_CONFIG_PATH")],
 ):
     config_obj = skill_config.load_config(config_path, config.SkillConfig)
     scene_skill_obj = scene_skill.SceneSkill(
@@ -37,7 +34,6 @@ def start_skill(
             protocol=mqtt.MQTTv5,
         ),
         config_obj=config_obj,
-        nlp_model=spacy.load(config_obj.spacy_model),
         ha_api_client=Client(
             config_obj.home_assistant_api_url,
             config_obj.home_assistant_token,
