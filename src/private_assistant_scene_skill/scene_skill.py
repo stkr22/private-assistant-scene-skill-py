@@ -64,7 +64,7 @@ class SceneSkill(commons.BaseSkill):
         return self._target_alias_cache
 
     def calculate_certainty(self, intent_analysis_result: messages.IntentAnalysisResult) -> float:
-        if ["scenery"] in intent_analysis_result.nouns:
+        if "scenery" in intent_analysis_result.nouns:
             return 1.0
         return 0
 
