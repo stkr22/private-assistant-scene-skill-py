@@ -1,6 +1,8 @@
-{% set count = parameters.targets | length %}
+{% set count = parameters.targets | length -%}
 {% if count == 1 -%}
-The scene {{ parameters.targets[0] }} has been applied.
+The scene {{ target_alias_cache[parameters.targets[0]] }} has been applied.
 {% else -%}
-The scenes {{ " and ".join(parameters.targets) }} have been applied.
+The scenes {% for target in parameters.targets -%}
+    {{ target_alias_cache[target] }}{% if not loop.last and loop.index != loop.length - 1 %}, {% elif loop.index == loop.length - 1 %} and {% endif %}
+{%- endfor %} have been applied.
 {% endif %}

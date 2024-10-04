@@ -130,7 +130,7 @@ class SceneSkill(commons.BaseSkill):
             for target in parameters.targets:
                 if action == Action.APPLY:
                     self.logger.debug("Applying scene for target '%s'.", target)
-                    await service.async_turn_on(entity_id=target)
+                    await service.turn_on(entity_id=target)
 
     async def process_request(self, intent_analysis_result: commons.IntentAnalysisResult) -> None:
         action = Action.find_matching_action(intent_analysis_result.verbs)
