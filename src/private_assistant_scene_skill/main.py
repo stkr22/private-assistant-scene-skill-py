@@ -33,6 +33,7 @@ async def start_skill(
     ha_api_client = Client(
         config_obj.home_assistant_api_url,
         config_obj.home_assistant_token,
+        use_async=True,
     )
 
     # Start the skill using the async MQTT connection handler

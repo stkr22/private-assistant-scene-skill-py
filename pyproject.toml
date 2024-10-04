@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "private-assistant-scene-skill"
-version = "1.0.1"
+version = "1.0.2"
 description = "Scene Control Skill for Private Assistant: Enables automated and voice-activated scene control within smart home environments."
 authors = ["stkr22 <stkr22@github.com>"]
 readme = "README.md"
