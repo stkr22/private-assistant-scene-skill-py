@@ -1,1 +1,6 @@
-I applied scene {{ " and ".join(parameters.targets) }}.
+{% set count = parameters.targets | length %}
+{% if count == 1 -%}
+The scene {{ parameters.targets[0] }} has been applied.
+{% else -%}
+The scenes {{ " and ".join(parameters.targets) }} have been applied.
+{% endif %}

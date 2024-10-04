@@ -2,10 +2,11 @@ import pathlib
 
 import pytest
 import yaml
+from pydantic import ValidationError
+
 from private_assistant_scene_skill.config import (
     SkillConfig,
 )
-from pydantic import ValidationError
 
 # Sample invalid YAML configuration (missing required fields)
 invalid_yaml = """
