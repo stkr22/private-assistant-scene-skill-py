@@ -85,7 +85,7 @@ class TestSceneSkill(unittest.IsolatedAsyncioTestCase):
         parameters = Parameters(targets=["romantic_evening"])
         await self.skill.call_action_api(Action.APPLY, parameters)
 
-        mock_service.async_turn_on.assert_called_once_with(entity_id="romantic_evening")
+        mock_service.turn_on.assert_called_once_with(entity_id="romantic_evening")
         self.mock_logger.error.assert_not_called()
 
     async def test_process_request_with_valid_action(self):
