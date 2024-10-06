@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 from typing import Annotated
 
@@ -33,6 +34,7 @@ async def start_skill(
     ha_api_client = Client(
         config_obj.home_assistant_api_url,
         config_obj.home_assistant_token,
+        async_cache_session=False,
         use_async=True,
     )
 
@@ -48,4 +50,4 @@ async def start_skill(
 
 
 if __name__ == "__main__":
-    start_skill(config_path=pathlib.Path("./local_config.yaml"))
+    asyncio.get_event_loop().run_until_complete(start_skill(config_path=pathlib.Path("./local_config.yaml")))
