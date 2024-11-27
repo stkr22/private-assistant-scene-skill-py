@@ -105,12 +105,12 @@ class TestSceneSkill(unittest.IsolatedAsyncioTestCase):
             ) as mock_get_answer,
             patch.object(self.skill, "call_action_api") as mock_call_action_api,
             patch.object(self.skill, "find_parameter_targets", return_value=["romantic_evening"]),
-            patch.object(self.skill, "add_text_to_output_topic") as mock_add_text_to_output_topic,
+            patch.object(self.skill, "send_response") as mock_send_response,
         ):
             await self.skill.process_request(mock_intent_result)
 
             mock_get_answer.assert_called_once_with(Action.APPLY, mock_parameters)
             mock_call_action_api.assert_called_once_with(Action.APPLY, mock_parameters)
-            mock_add_text_to_output_topic.assert_called_once_with(
+            mock_send_response.assert_called_once_with(
                 "Setting the scene to Romantic Evening", client_request=mock_intent_result.client_request
             )

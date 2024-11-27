@@ -119,7 +119,7 @@ class SceneSkill(commons.BaseSkill):
             return answer
         else:
             self.logger.error("No template found for action %s.", action)
-            return "Sorry, I couldn't process your request."
+            return "Sorry, couldn't process your request."
 
     async def call_action_api(self, action: Action, parameters: Parameters) -> None:
         """Call the appropriate action in Home Assistant API asynchronously."""
@@ -141,7 +141,7 @@ class SceneSkill(commons.BaseSkill):
         parameters = await self.find_parameters(action, intent_analysis_result=intent_analysis_result)
         if parameters.targets:
             answer = self.get_answer(action, parameters)
-            self.add_task(self.add_text_to_output_topic(answer, client_request=intent_analysis_result.client_request))
+            self.add_task(self.send_response(answer, client_request=intent_analysis_result.client_request))
             if action not in [Action.HELP, Action.LIST]:
                 self.add_task(self.call_action_api(action, parameters))
         else:
