@@ -40,19 +40,21 @@ class SceneSkill(commons.BaseSkill):
         super().__init__(config_obj, mqtt_client, task_group, logger=logger)
         self.ha_api_client: ha_api.Client = ha_api_client
         self.template_env: jinja2.Environment = template_env
-        self.action_to_answer: dict[Action, jinja2.Template] = {}
-
-        # Preload templates
-        try:
-            self.action_to_answer[Action.HELP] = self.template_env.get_template("help.j2")
-            self.action_to_answer[Action.LIST] = self.template_env.get_template("list.j2")
-            self.action_to_answer[Action.APPLY] = self.template_env.get_template("apply.j2")
-            self.logger.debug("Templates successfully loaded during initialization.")
-        except jinja2.TemplateNotFound as e:
-            self.logger.error("Failed to load template: %s", e)
+        self.action_to_template: dict[Action, jinja2.Template] = {}
 
         self._target_cache: dict[str, ha_api.State] = {}
         self._target_alias_cache: dict[str, str] = {}
+
+    def _load_templates(self) -> None:
+        try:
+            for action in Action:
+                self.action_to_template[action] = self.template_env.get_template(f"{action.name.lower()}.j2")
+            self.logger.debug("Templates loaded successfully")
+        except jinja2.TemplateNotFound as e:
+            self.logger.error("Failed to load template: %s", e)
+
+    async def skill_preparations(self) -> None:
+        self._load_templates()
 
     async def load_target_cache(self) -> None:
         """Asynchronously load targets from the Home Assistant API."""
@@ -108,7 +110,7 @@ class SceneSkill(commons.BaseSkill):
         return parameters
 
     def get_answer(self, action: Action, parameters: Parameters) -> str:
-        template = self.action_to_answer.get(action)
+        template = self.action_to_template.get(action)
         if template:
             answer = template.render(
                 action=action,
@@ -117,9 +119,8 @@ class SceneSkill(commons.BaseSkill):
             )
             self.logger.debug("Generated answer using template for action %s.", action)
             return answer
-        else:
-            self.logger.error("No template found for action %s.", action)
-            return "Sorry, couldn't process your request."
+        self.logger.error("No template found for action %s.", action)
+        return "Sorry, couldn't process your request."
 
     async def call_action_api(self, action: Action, parameters: Parameters) -> None:
         """Call the appropriate action in Home Assistant API asynchronously."""

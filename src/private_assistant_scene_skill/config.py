@@ -1,4 +1,3 @@
-import logging
 
 import private_assistant_commons as commons
 
