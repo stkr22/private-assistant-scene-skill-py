@@ -2,16 +2,20 @@ import asyncio
 from enum import Enum
 
 import aiomqtt
-import homeassistant_api as ha_api
 import jinja2
 import private_assistant_commons as commons
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.orm import selectinload
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from private_assistant_scene_skill import config
+from private_assistant_scene_skill.models import SceneSkillDevices, SceneSkillScenes
 
 
 class Parameters(BaseModel):
-    targets: list[str] = []
+    scene_names: list[str] = []
+    devices: list[SceneSkillDevices] = []
 
 
 class Action(Enum):
@@ -30,20 +34,19 @@ class Action(Enum):
 class SceneSkill(commons.BaseSkill):
     def __init__(
         self,
-        config_obj: config.SkillConfig,
+        config_obj: commons.SkillConfig,
         mqtt_client: aiomqtt.Client,
-        ha_api_client: ha_api.Client,
+        db_engine: AsyncEngine,
         template_env: jinja2.Environment,
         task_group: asyncio.TaskGroup,
         logger,
     ) -> None:
         super().__init__(config_obj, mqtt_client, task_group, logger=logger)
-        self.ha_api_client: ha_api.Client = ha_api_client
+        self.db_engine = db_engine
         self.template_env: jinja2.Environment = template_env
         self.action_to_template: dict[Action, jinja2.Template] = {}
 
-        self._target_cache: dict[str, ha_api.State] = {}
-        self._target_alias_cache: dict[str, str] = {}
+        self._scene_cache: dict[str, list[SceneSkillDevices]] = {}
 
     def _load_templates(self) -> None:
         try:
@@ -53,59 +56,42 @@ class SceneSkill(commons.BaseSkill):
         except jinja2.TemplateNotFound as e:
             self.logger.error("Failed to load template: %s", e)
 
+    async def load_scene_cache(self) -> None:
+        """Asynchronously load devices into the cache."""
+        if not self._scene_cache:
+            self.logger.debug("Loading devices into cache asynchronously.")
+            async with AsyncSession(self.db_engine) as session:
+                result = (await session.exec(select(SceneSkillScenes).options(selectinload("*")))).all()
+                self._scene_cache = {scene.name: list(scene.devices) for scene in result}
+
     async def skill_preparations(self) -> None:
         self._load_templates()
-
-    async def load_target_cache(self) -> None:
-        """Asynchronously load targets from the Home Assistant API."""
-        if len(self._target_cache) < 1:
-            self.logger.debug("Fetching targets from Home Assistant API.")
-            entity_groups = await self.ha_api_client.async_get_entities()
-            self._target_cache = {
-                entity_name: entity.state for entity_name, entity in entity_groups["scene"].entities.items()
-            }
-            self.logger.debug("Retrieved %d scene entities from Home Assistant.", len(self._target_cache))
-
-    async def get_targets(self) -> dict[str, ha_api.State]:
-        if len(self._target_cache) < 1:
-            await self.load_target_cache()
-        return self._target_cache
-
-    async def load_target_alias_cache(self) -> None:
-        """Asynchronously build alias cache for targets."""
-        if len(self._target_alias_cache) < 1:
-            self.logger.debug("Building target alias cache.")
-            await self.load_target_cache()
-            for target in self._target_cache.values():
-                alias = target.attributes.get("friendly_name", "no name").lower()
-                self._target_alias_cache[target.entity_id] = alias
-
-    async def get_target_alias_cache(self) -> dict[str, str]:
-        if len(self._target_alias_cache) < 1:
-            await self.load_target_alias_cache()
-        return self._target_alias_cache
+        await self.load_scene_cache()
 
     async def calculate_certainty(self, intent_analysis_result: commons.IntentAnalysisResult) -> float:
-        if "scenery" in intent_analysis_result.nouns:
-            self.logger.debug("Scenery noun detected, certainty set to 1.0.")
+        keywords = ["scenery", "scene", "scenario"]
+        if any(noun in keywords for noun in intent_analysis_result.nouns):
+            self.logger.info("Keywords %s in nouns detected, certainty set to 1.0.", keywords)
             return 1.0
-        self.logger.debug("No scenery noun detected, certainty set to 0.")
+        self.logger.debug("No keyword in nouns detected, certainty set to 0.")
         return 0
 
-    async def find_parameter_targets(self, nouns: list[str]) -> list[str]:
-        await self.load_target_alias_cache()
-        targets = [target for target, alias in self._target_alias_cache.items() if any(noun in alias for noun in nouns)]
-        self.logger.debug("Found %d targets matching nouns '%s'.", len(targets), nouns)
-        return targets
+    def find_parameter_scenes(self, nouns: list[str]) -> tuple[list[str], list[SceneSkillDevices]]:
+        names = []
+        devices: list[SceneSkillDevices] = []
+        nouns_lower = [n.lower() for n in nouns]
+        for scene_name, scene_devices in self._scene_cache.items():
+            if scene_name in nouns_lower:
+                names.append(scene_name)
+                devices += scene_devices
+        return names, devices
 
-    async def find_parameters(self, action: Action, intent_analysis_result: commons.IntentAnalysisResult) -> Parameters:
+    def find_parameters(self, action: Action, intent_analysis_result: commons.IntentAnalysisResult) -> Parameters:
         parameters = Parameters()
         if action == Action.LIST:
-            parameters.targets = list((await self.get_target_alias_cache()).keys())
+            parameters.scene_names = list(self._scene_cache)
         elif action == Action.APPLY:
-            found_scenes = await self.find_parameter_targets(intent_analysis_result.nouns)
-            if found_scenes:
-                parameters.targets = found_scenes
+            parameters.scene_names, parameters.devices = self.find_parameter_scenes(intent_analysis_result.nouns)
         self.logger.debug("Parameters found for action %s: %s.", action, parameters)
         return parameters
 
@@ -115,23 +101,21 @@ class SceneSkill(commons.BaseSkill):
             answer = template.render(
                 action=action,
                 parameters=parameters,
-                target_alias_cache=self._target_alias_cache,
             )
             self.logger.debug("Generated answer using template for action %s.", action)
             return answer
         self.logger.error("No template found for action %s.", action)
         return "Sorry, couldn't process your request."
 
-    async def call_action_api(self, action: Action, parameters: Parameters) -> None:
-        """Call the appropriate action in Home Assistant API asynchronously."""
-        service = await self.ha_api_client.async_get_domain("scene")
-        if service is None:
-            self.logger.error("Failed to retrieve the scene service from Home Assistant API.")
-        else:
-            for target in parameters.targets:
-                if action == Action.APPLY:
-                    self.logger.debug("Applying scene for target '%s'.", target)
-                    await service.turn_on(entity_id=target)
+    async def send_mqtt_command(self, parameters: Parameters) -> None:
+        """Send the MQTT command asynchronously."""
+        for device in parameters.devices:
+            self.logger.info(
+                "Sending payload %s to topic %s via MQTT.",
+                device.topic,
+                device.scene_payload,
+            )
+            await self.mqtt_client.publish(device.topic, device.scene_payload, qos=1)
 
     async def process_request(self, intent_analysis_result: commons.IntentAnalysisResult) -> None:
         action = Action.find_matching_action(intent_analysis_result.verbs)
@@ -139,11 +123,11 @@ class SceneSkill(commons.BaseSkill):
             self.logger.error("Unrecognized action in verbs: %s", intent_analysis_result.verbs)
             return
 
-        parameters = await self.find_parameters(action, intent_analysis_result=intent_analysis_result)
-        if parameters.targets:
+        parameters = self.find_parameters(action, intent_analysis_result=intent_analysis_result)
+        if parameters.scene_names:
             answer = self.get_answer(action, parameters)
             self.add_task(self.send_response(answer, client_request=intent_analysis_result.client_request))
             if action not in [Action.HELP, Action.LIST]:
-                self.add_task(self.call_action_api(action, parameters))
+                self.add_task(self.send_mqtt_command(parameters))
         else:
-            self.logger.error("No targets found for action.")
+            self.logger.error("No targets found for action %s.", action)

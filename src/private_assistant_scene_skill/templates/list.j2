@@ -1,3 +1,3 @@
-Scenes {% for target in parameters.targets -%}
-{{ target_alias_cache[target] }}{{" and " if not loop.last and parameters.targets|length > 1 else "" }}
+Scenes {% for target in parameters.scene_names -%}
+{{ target }}{% if not loop.last and loop.index != loop.length - 1 %}, {% elif loop.index == loop.length - 1 %} and {% endif %}
 {%- endfor %} can be used.

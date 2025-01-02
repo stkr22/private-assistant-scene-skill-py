@@ -1,8 +1,9 @@
-{% set count = parameters.targets | length -%}
-{% if count == 1 -%}
-The scene {{ target_alias_cache[parameters.targets[0]] }} has been applied.
+{% set scene_count = parameters.scene_names | length -%}
+{% set device_count = parameters.devices | length -%}
+{% if scene_count == 1 -%}
+The scene {{ parameters.scene_names[0] }} has been applied affecting {{ device_count }} device{% if device_count != 1 %}s{% endif %}.
 {% else -%}
-The scenes {% for target in parameters.targets -%}
-    {{ target_alias_cache[target] }}{% if not loop.last and loop.index != loop.length - 1 %}, {% elif loop.index == loop.length - 1 %} and {% endif %}
-{%- endfor %} have been applied.
+The scenes {% for scene in parameters.scene_names -%}
+    {{ scene }}{% if not loop.last and loop.index != loop.length - 1 %}, {% elif loop.index == loop.length - 1 %} and {% endif %}
+{%- endfor %} have been applied affecting {{ device_count }} device{% if device_count != 1 %}s{% endif %}.
 {% endif %}
