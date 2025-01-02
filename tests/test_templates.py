@@ -1,44 +1,52 @@
 import jinja2
 import pytest
 
+from private_assistant_scene_skill.models import SceneSkillDevices
 from private_assistant_scene_skill.scene_skill import Parameters
 
 
-# Fixture to set up the Jinja2 environment
 @pytest.fixture(scope="module")
 def jinja_env():
     return jinja2.Environment(
-        loader=jinja2.PackageLoader(
-            "private_assistant_scene_skill",
-            "templates",
-        ),
+        loader=jinja2.PackageLoader("private_assistant_scene_skill", "templates"),
     )
 
 
-def render_template(template_name, parameters, env, target_alias_cache=None):
-    template = env.get_template(template_name)
-    return template.render(parameters=parameters, target_alias_cache=target_alias_cache)
-
-
-# Test for apply.j2 (applying scenes)
 @pytest.mark.parametrize(
-    "targets, target_alias_cache, expected_output",
+    "template_name,parameters,expected_output",
     [
-        # Single scene
         (
-            ["romantic_evening"],
-            {"romantic_evening": "Romantic Evening"},
-            "The scene Romantic Evening has been applied.\n",
+            "apply.j2",
+            Parameters(
+                scene_names=["romantic"],
+                devices=[SceneSkillDevices(topic="light/1", scene_payload="ON")],
+            ),
+            "The scene romantic has been applied affecting 1 device.\n",
         ),
-        # Multiple scenes
         (
-            ["romantic_evening", "morning_routine"],
-            {"romantic_evening": "Romantic Evening", "morning_routine": "Morning Routine"},
-            "The scenes Romantic Evening and Morning Routine have been applied.\n",
+            "apply.j2",
+            Parameters(
+                scene_names=["romantic", "morning"],
+                devices=[
+                    SceneSkillDevices(topic="light/1", scene_payload="ON"),
+                    SceneSkillDevices(topic="light/2", scene_payload="ON"),
+                ],
+            ),
+            "The scenes romantic and morning have been applied affecting 2 devices.\n",
+        ),
+        (
+            "list.j2",
+            Parameters(scene_names=["romantic"]),
+            "Scenes romantic can be used.",
+        ),
+        (
+            "list.j2",
+            Parameters(scene_names=["romantic", "morning"]),
+            "Scenes romantic and morning can be used.",
         ),
     ],
 )
-def test_apply_template(jinja_env, targets, target_alias_cache, expected_output):
-    parameters = Parameters(targets=targets)
-    result = render_template("apply.j2", parameters, jinja_env, target_alias_cache=target_alias_cache)
+def test_templates(jinja_env, template_name, parameters, expected_output):
+    template = jinja_env.get_template(template_name)
+    result = template.render(parameters=parameters)
     assert result == expected_output

@@ -4,10 +4,11 @@ from typing import Annotated
 
 import jinja2
 import typer
-from homeassistant_api import Client
 from private_assistant_commons import mqtt_connection_handler, skill_config, skill_logger
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel
 
-from private_assistant_scene_skill import config, scene_skill
+from private_assistant_scene_skill import scene_skill
 
 app = typer.Typer()
 
@@ -22,9 +23,10 @@ async def start_skill(
 ):
     # Set up logger early on
     logger = skill_logger.SkillLogger.get_logger("Private Assistant SceneSkill")
-
-    # Load configuration
-    config_obj = skill_config.load_config(config_path, config.SkillConfig)
+    config_obj = skill_config.load_config(config_path, skill_config.SkillConfig)
+    db_engine_async = create_async_engine(skill_config.PostgresConfig.from_env().connection_string_async)
+    async with db_engine_async.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
 
     # Set up Jinja2 template environment
     template_env = jinja2.Environment(
@@ -34,14 +36,6 @@ async def start_skill(
         )
     )
 
-    # Set up Home Assistant API client
-    ha_api_client = Client(
-        config_obj.home_assistant_api_url,
-        config_obj.home_assistant_token,
-        async_cache_session=False,
-        use_async=True,
-    )
-
     # Start the skill using the async MQTT connection handler
     await mqtt_connection_handler.mqtt_connection_handler(
         scene_skill.SceneSkill,
@@ -49,7 +43,7 @@ async def start_skill(
         retry_interval=5,
         logger=logger,
         template_env=template_env,
-        ha_api_client=ha_api_client,
+        db_engine=db_engine_async,
     )
 
 
