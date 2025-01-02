@@ -36,6 +36,7 @@ dev = [
     "pytest>=8.3.3",
     "types-pyyaml>=6.0.12.20240311",
     "pytest-cov>=6.0.0",
+    "pytest-asyncio>=0.25.1",
 ]
 
 [project.scripts]
@@ -72,6 +73,10 @@ warn_unused_configs = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-ra -q"
+asyncio_mode = "auto"
+markers = [
+    "asyncio: mark a test as an async test",
+]
 
 [tool.coverage.run]
 source = ["private_assistant_scene_skill"]
