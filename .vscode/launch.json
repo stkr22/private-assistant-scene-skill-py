@@ -9,8 +9,12 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "LOG_LEVEL": "DEBUG"
-            }
+                "LOG_LEVEL": "DEBUG",
+                "TYPER_DEBUG": "1"
+            },
+            "args": [
+                "./.local_config.yaml"
+            ]
         }
     ]
 }
