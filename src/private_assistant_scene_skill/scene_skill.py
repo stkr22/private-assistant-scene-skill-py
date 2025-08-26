@@ -32,7 +32,7 @@ class Action(Enum):
 
 
 class SceneSkill(commons.BaseSkill):
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         config_obj: commons.SkillConfig,
         mqtt_client: aiomqtt.Client,

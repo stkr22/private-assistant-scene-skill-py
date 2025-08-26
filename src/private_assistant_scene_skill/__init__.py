@@ -1,1 +1,1 @@
-"""Scene Control Skill for Private Assistant: Enables automated and voice-activated scene control within smart home environments."""
+"""Scene Control Skill for Private Assistant: Enables automated scene control in smart homes."""

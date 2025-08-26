@@ -87,7 +87,7 @@ async def test_find_parameter_scenes(scene_skill):
     }
     names, devices = scene_skill.find_parameter_scenes(["romantic", "morning"])
     assert names == ["romantic", "morning"]
-    assert len(devices) == 2
+    assert len(devices) == 2  # noqa: PLR2004
     assert all(isinstance(d, SceneSkillDevices) for d in devices)
 
 
@@ -114,7 +114,7 @@ async def test_send_mqtt_command(scene_skill, mock_mqtt_client):
 
     await scene_skill.send_mqtt_command(parameters)
 
-    assert mock_mqtt_client.publish.await_count == 2
+    assert mock_mqtt_client.publish.await_count == 2  # noqa: PLR2004
     mock_mqtt_client.publish.assert_any_await("light/1", "ON", qos=1)
     mock_mqtt_client.publish.assert_any_await("light/2", "OFF", qos=1)
 
