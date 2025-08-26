@@ -1,0 +1,1 @@
+"""Scene Control Skill for Private Assistant: Enables automated scene control in smart homes."""
