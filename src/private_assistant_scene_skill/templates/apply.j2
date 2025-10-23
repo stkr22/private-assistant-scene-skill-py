@@ -1,5 +1,4 @@
 {% set scene_count = parameters.scene_names | length -%}
-{% set device_count = parameters.devices | length -%}
 {% if scene_count == 1 -%}
 The scene {{ parameters.scene_names[0] }} has been applied affecting {{ device_count }} device{% if device_count != 1 %}s{% endif %}.
 {% else -%}

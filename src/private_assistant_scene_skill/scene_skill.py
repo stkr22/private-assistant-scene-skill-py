@@ -1,37 +1,35 @@
 import asyncio
-from enum import Enum
+import logging
 
 import aiomqtt
 import jinja2
 import private_assistant_commons as commons
+from private_assistant_commons import (
+    ClassifiedIntent,
+    IntentRequest,
+    IntentType,
+)
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.orm import selectinload
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
-from private_assistant_scene_skill.models import SceneSkillDevices, SceneSkillScenes
+from private_assistant_scene_skill.models import SceneDevice
 
 
 class Parameters(BaseModel):
+    """Parameters extracted from intent for scene operations."""
+
     scene_names: list[str] = []
-    devices: list[SceneSkillDevices] = []
-
-
-class Action(Enum):
-    HELP = "help"
-    LIST = "list"
-    APPLY = "apply"
-
-    @classmethod
-    def find_matching_action(cls, verbs: list):
-        for action in cls:
-            if action.value in verbs:
-                return action
-        return None
+    targets: list[SceneDevice] = []
+    rooms: list[str] = []
 
 
 class SceneSkill(commons.BaseSkill):
+    """Scene control skill for activating predefined scenes via MQTT.
+
+    Processes voice commands to activate scenes that trigger multiple devices.
+    Integrates with global device registry for scene discovery and management.
+    """
+
     def __init__(  # noqa: PLR0913
         self,
         config_obj: commons.SkillConfig,
@@ -39,95 +37,248 @@ class SceneSkill(commons.BaseSkill):
         db_engine: AsyncEngine,
         template_env: jinja2.Environment,
         task_group: asyncio.TaskGroup,
-        logger,
+        logger: logging.Logger,
     ) -> None:
-        super().__init__(config_obj, mqtt_client, task_group, logger=logger)
-        self.db_engine = db_engine
-        self.template_env: jinja2.Environment = template_env
-        self.action_to_template: dict[Action, jinja2.Template] = {}
+        """Initialize the scene skill with dependencies.
 
-        self._scene_cache: dict[str, list[SceneSkillDevices]] = {}
+        Args:
+            config_obj: Skill configuration from commons
+            mqtt_client: MQTT client for device communication
+            db_engine: Database engine for global device registry
+            template_env: Jinja2 environment for response templates
+            task_group: Async task group for concurrent operations
+            logger: Logger instance for debugging and monitoring
+        """
+        # Pass engine to BaseSkill (NEW REQUIRED PARAMETER)
+        super().__init__(
+            config_obj=config_obj,
+            mqtt_client=mqtt_client,
+            task_group=task_group,
+            engine=db_engine,
+            logger=logger,
+        )
+        self.db_engine = db_engine
+        self.template_env = template_env
+        self.intent_to_template: dict[IntentType, jinja2.Template] = {}
+
+        # AIDEV-NOTE: Intent-based configuration replaces calculate_certainty method
+        self.supported_intents = {
+            IntentType.SCENE_APPLY: 0.8,  # "activate romantic scene"
+            IntentType.SYSTEM_HELP: 0.7,  # "how do I use scenes?"
+        }
+
+        # AIDEV-NOTE: Device types this skill can control
+        self.supported_device_types = ["scene"]
+
+        # AIDEV-NOTE: Template preloading at init prevents runtime template lookup failures
+        self._load_templates()
 
     def _load_templates(self) -> None:
-        try:
-            for action in Action:
-                self.action_to_template[action] = self.template_env.get_template(f"{action.name.lower()}.j2")
-            self.logger.debug("Templates loaded successfully")
-        except jinja2.TemplateNotFound as e:
-            self.logger.error("Failed to load template: %s", e)
+        """Load and validate all required templates with fallback handling.
 
-    async def load_scene_cache(self) -> None:
-        """Asynchronously load devices into the cache."""
-        if not self._scene_cache:
-            self.logger.debug("Loading devices into cache asynchronously.")
-            async with AsyncSession(self.db_engine) as session:
-                result = (await session.exec(select(SceneSkillScenes).options(selectinload("*")))).all()
-                self._scene_cache = {scene.name: list(scene.devices) for scene in result}
+        Raises:
+            RuntimeError: If critical templates cannot be loaded
+        """
+        template_mappings = {
+            IntentType.SYSTEM_HELP: "help.j2",
+            IntentType.SCENE_APPLY: "apply.j2",
+        }
 
-    async def skill_preparations(self) -> None:
-        self._load_templates()
-        await self.load_scene_cache()
+        failed_templates = []
+        for intent_type, template_name in template_mappings.items():
+            try:
+                self.intent_to_template[intent_type] = self.template_env.get_template(template_name)
+            except jinja2.TemplateNotFound as e:
+                self.logger.error("Failed to load template %s: %s", template_name, e)
+                failed_templates.append(template_name)
 
-    async def calculate_certainty(self, intent_analysis_result: commons.IntentAnalysisResult) -> float:
-        keywords = ["scenery", "scene", "scenario"]
-        if any(noun in keywords for noun in intent_analysis_result.nouns):
-            self.logger.info("Keywords %s in nouns detected, certainty set to 1.0.", keywords)
-            return 1.0
-        self.logger.debug("No keyword in nouns detected, certainty set to 0.")
-        return 0
+        if failed_templates:
+            raise RuntimeError(f"Critical templates failed to load: {', '.join(failed_templates)}")
 
-    def find_parameter_scenes(self, nouns: list[str]) -> tuple[list[str], list[SceneSkillDevices]]:
-        names = []
-        devices: list[SceneSkillDevices] = []
-        nouns_lower = [n.lower() for n in nouns]
-        for scene_name, scene_devices in self._scene_cache.items():
-            if scene_name in nouns_lower:
-                names.append(scene_name)
-                devices += scene_devices
-        return names, devices
+        self.logger.debug("All templates successfully loaded during initialization.")
 
-    def find_parameters(self, action: Action, intent_analysis_result: commons.IntentAnalysisResult) -> Parameters:
+    async def get_scenes(
+        self, rooms: list[str] | None = None, scene_names: list[str] | None = None
+    ) -> list[SceneDevice]:
+        """Return scene devices from global device registry.
+
+        Args:
+            rooms: Optional list of room names to filter scenes
+            scene_names: Optional list of scene names to filter
+
+        Returns:
+            List of SceneDevice objects matching the filters
+        """
+        self.logger.info("Fetching scenes with filters - rooms: %s, names: %s", rooms, scene_names)
+
+        scenes = []
+        for global_device in self.global_devices:
+            # Filter by room if specified
+            if rooms and global_device.room and global_device.room.name not in rooms:
+                continue
+
+            # Filter by name if specified
+            if scene_names:
+                # Normalize names for comparison (lowercase)
+                normalized_scene_names = [name.lower() for name in scene_names]
+                if global_device.name.lower() not in normalized_scene_names:
+                    continue
+
+            try:
+                scene_device = SceneDevice.from_global_device(global_device)
+                scenes.append(scene_device)
+            except ValueError as e:
+                self.logger.warning("Skipping scene device %s: %s", global_device.name, e)
+
+        self.logger.debug("Found %d scenes matching filters", len(scenes))
+        return scenes
+
+    async def find_parameters(
+        self, intent_type: IntentType, classified_intent: ClassifiedIntent, current_room: str
+    ) -> Parameters:
+        """Extract parameters from classified intent entities.
+
+        Args:
+            intent_type: The type of intent being processed
+            classified_intent: The classified intent with extracted entities
+            current_room: The room where the command originated
+
+        Returns:
+            Parameters object with scenes, rooms, and targets
+        """
         parameters = Parameters()
-        if action == Action.LIST:
-            parameters.scene_names = list(self._scene_cache)
-        elif action == Action.APPLY:
-            parameters.scene_names, parameters.devices = self.find_parameter_scenes(intent_analysis_result.nouns)
-        self.logger.debug("Parameters found for action %s: %s.", action, parameters)
+
+        # Extract rooms from entities, fallback to current room
+        room_entities = classified_intent.entities.get("rooms", [])
+        parameters.rooms = [room.normalized_value for room in room_entities] if room_entities else [current_room]
+
+        # Extract scene names from entities
+        scene_entities = classified_intent.entities.get("scenes", [])
+        if scene_entities:
+            parameters.scene_names = [scene.normalized_value for scene in scene_entities]
+
+        if intent_type == IntentType.SCENE_APPLY:
+            # Get scenes matching the requested names and/or rooms
+            scenes = await self.get_scenes(
+                rooms=parameters.rooms if room_entities else None,
+                scene_names=parameters.scene_names if scene_entities else None,
+            )
+            parameters.targets = scenes
+
+        self.logger.debug("Extracted parameters: %s", parameters.model_dump())
         return parameters
 
-    def get_answer(self, action: Action, parameters: Parameters) -> str:
-        template = self.action_to_template.get(action)
-        if template:
-            answer = template.render(
-                action=action,
-                parameters=parameters,
-            )
-            self.logger.debug("Generated answer using template for action %s.", action)
-            return answer
-        self.logger.error("No template found for action %s.", action)
-        return "Sorry, couldn't process your request."
+    def _render_response(self, intent_type: IntentType, parameters: Parameters) -> str:
+        """Render response template for the given intent and parameters.
 
-    async def send_mqtt_command(self, parameters: Parameters) -> None:
-        """Send the MQTT command asynchronously."""
-        for device in parameters.devices:
-            self.logger.info(
-                "Sending payload %s to topic %s via MQTT.",
-                device.topic,
-                device.scene_payload,
-            )
-            await self.mqtt_client.publish(device.topic, device.scene_payload, qos=1)
+        Args:
+            intent_type: The type of intent being processed
+            parameters: Parameters extracted from the intent
 
-    async def process_request(self, intent_analysis_result: commons.IntentAnalysisResult) -> None:
-        action = Action.find_matching_action(intent_analysis_result.verbs)
-        if action is None:
-            self.logger.error("Unrecognized action in verbs: %s", intent_analysis_result.verbs)
+        Returns:
+            Rendered response text
+        """
+        template = self.intent_to_template.get(intent_type)
+        if not template:
+            self.logger.error("No template found for intent type %s", intent_type)
+            return "Sorry, I couldn't process your request."
+
+        # Count total devices affected
+        device_count = sum(len(scene.device_actions) for scene in parameters.targets)
+
+        answer = template.render(
+            parameters=parameters,
+            device_count=device_count,
+        )
+        self.logger.debug("Generated answer using template for intent %s", intent_type)
+        return answer
+
+    async def _send_mqtt_commands(self, parameters: Parameters) -> None:
+        """Send MQTT commands to activate scenes.
+
+        Args:
+            parameters: Parameters containing target scenes to activate
+        """
+        for scene in parameters.targets:
+            self.logger.info("Activating scene: %s with %d device actions", scene.name, len(scene.device_actions))
+
+            for device_action in scene.device_actions:
+                topic = device_action.get("topic")
+                payload = device_action.get("payload", "ON")
+
+                if topic:
+                    self.logger.info("Sending payload '%s' to topic '%s' via MQTT", payload, topic)
+                    await self.mqtt_client.publish(topic, payload, qos=1)
+                else:
+                    self.logger.warning("Device action missing topic in scene %s", scene.name)
+
+    async def _handle_scene_apply(self, intent_request: IntentRequest) -> None:
+        """Handle SCENE_APPLY intent - activate one or more scenes.
+
+        Args:
+            intent_request: The intent request with classified intent and client request
+        """
+        classified_intent = intent_request.classified_intent
+        client_request = intent_request.client_request
+        current_room = client_request.room
+
+        # Extract parameters from entities
+        parameters = await self.find_parameters(IntentType.SCENE_APPLY, classified_intent, current_room)
+
+        if not parameters.targets:
+            await self.send_response("I couldn't find any scenes to activate.", client_request)
             return
 
-        parameters = self.find_parameters(action, intent_analysis_result=intent_analysis_result)
-        if parameters.scene_names:
-            answer = self.get_answer(action, parameters)
-            self.add_task(self.send_response(answer, client_request=intent_analysis_result.client_request))
-            if action not in [Action.HELP, Action.LIST]:
-                self.add_task(self.send_mqtt_command(parameters))
+        # Send response and MQTT commands
+        answer = self._render_response(IntentType.SCENE_APPLY, parameters)
+        self.add_task(self.send_response(answer, client_request=client_request))
+        self.add_task(self._send_mqtt_commands(parameters))
+
+    async def _handle_system_help(self, intent_request: IntentRequest) -> None:
+        """Handle SYSTEM_HELP intent - show help information.
+
+        Args:
+            intent_request: The intent request with classified intent and client request
+        """
+        client_request = intent_request.client_request
+        current_room = client_request.room
+
+        # Build empty parameters for help template
+        parameters = Parameters()
+        parameters.rooms = [current_room]
+
+        # Send response
+        answer = self._render_response(IntentType.SYSTEM_HELP, parameters)
+        self.add_task(self.send_response(answer, client_request=client_request))
+
+    async def process_request(self, intent_request: IntentRequest) -> None:
+        """Main request processing method - routes intent to appropriate handler.
+
+        Orchestrates the full command processing pipeline:
+        1. Extract intent type from classified intent
+        2. Route to appropriate intent handler
+        3. Handler extracts entities, controls devices, and sends response
+
+        Args:
+            intent_request: The intent request with classified intent and client request
+        """
+        classified_intent = intent_request.classified_intent
+        intent_type = classified_intent.intent_type
+
+        self.logger.debug(
+            "Processing intent %s with confidence %.2f",
+            intent_type,
+            classified_intent.confidence,
+        )
+
+        # Route to appropriate handler
+        if intent_type == IntentType.SCENE_APPLY:
+            await self._handle_scene_apply(intent_request)
+        elif intent_type == IntentType.SYSTEM_HELP:
+            await self._handle_system_help(intent_request)
         else:
-            self.logger.error("No targets found for action %s.", action)
+            self.logger.warning("Unsupported intent type: %s", intent_type)
+            await self.send_response(
+                "I'm not sure how to handle that request.",
+                client_request=intent_request.client_request,
+            )
