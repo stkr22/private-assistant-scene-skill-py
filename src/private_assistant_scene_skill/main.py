@@ -5,8 +5,8 @@ from typing import Annotated
 import jinja2
 import typer
 from private_assistant_commons import mqtt_connection_handler, skill_config, skill_logger
+from private_assistant_commons.database import PostgresConfig
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel import SQLModel
 
 from private_assistant_scene_skill import scene_skill
 
@@ -23,10 +23,12 @@ async def start_skill(
 ):
     # Set up logger early on
     logger = skill_logger.SkillLogger.get_logger("Private Assistant SceneSkill")
+
+    # Load configuration
     config_obj = skill_config.load_config(config_path, skill_config.SkillConfig)
-    db_engine_async = create_async_engine(skill_config.PostgresConfig.from_env().connection_string_async)
-    async with db_engine_async.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+
+    # Create an async database engine
+    db_engine_async = create_async_engine(PostgresConfig().connection_string_async)
 
     # Set up Jinja2 template environment
     template_env = jinja2.Environment(
