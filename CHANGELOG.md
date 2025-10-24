@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.1.0...v2.1.1) (2025-10-24)
+
+
+### Bug Fixes
+
+* :bug: use singular entity keys to match intent classifier format [AI] ([4493e60](https://github.com/stkr22/private-assistant-scene-skill-py/commit/4493e60aab22e097490975442b50bcab4dbb462c))
+* :bug: use singular entity keys to match intent classifier format [AI] ([8355cd2](https://github.com/stkr22/private-assistant-scene-skill-py/commit/8355cd245ce768c28cf72b44c54cf3bfc26b9e07))
+
 ## [2.1.0](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.0.1...v2.1.0) (2025-10-23)
 
 
