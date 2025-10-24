@@ -202,11 +202,12 @@ async def test_handle_scene_apply_success(scene_skill, monkeypatch):
     # Mock classified intent and client request
     mock_entity = Mock()
     mock_entity.normalized_value = "romantic"
+    mock_entity.metadata = {"device_type": "scene"}
 
     mock_classified_intent = Mock()
     mock_classified_intent.intent_type = IntentType.SCENE_APPLY
     mock_classified_intent.confidence = 0.9
-    mock_classified_intent.entities = {"scenes": [mock_entity], "rooms": []}
+    mock_classified_intent.entities = {"device": [mock_entity]}
 
     mock_client_request = Mock()
     mock_client_request.room = "living room"
@@ -244,11 +245,12 @@ async def test_handle_scene_apply_not_found(scene_skill, monkeypatch):
     # Mock classified intent with non-existent scene
     mock_entity = Mock()
     mock_entity.normalized_value = "nonexistent"
+    mock_entity.metadata = {"device_type": "scene"}
 
     mock_classified_intent = Mock()
     mock_classified_intent.intent_type = IntentType.SCENE_APPLY
     mock_classified_intent.confidence = 0.9
-    mock_classified_intent.entities = {"scenes": [mock_entity], "rooms": []}
+    mock_classified_intent.entities = {"device": [mock_entity]}
 
     mock_client_request = Mock()
     mock_client_request.room = "living room"

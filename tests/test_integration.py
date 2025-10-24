@@ -382,7 +382,7 @@ class TestSceneApplyCommand:
             raw_text="romantic",
             normalized_value="romantic",
             confidence=0.9,
-            metadata={},
+            metadata={"device_type": "scene"},
             linked_to=[],
         )
 
@@ -390,7 +390,7 @@ class TestSceneApplyCommand:
             id=uuid.uuid4(),
             intent_type=IntentType.SCENE_APPLY,
             confidence=0.9,
-            entities={"scenes": [scene_entity]},
+            entities={"device": [scene_entity]},
             alternative_intents=[],
             raw_text="activate romantic scene",
             timestamp=datetime.now(),
@@ -488,7 +488,7 @@ class TestMultipleScenes:
             raw_text="romantic",
             normalized_value="romantic",
             confidence=0.9,
-            metadata={},
+            metadata={"device_type": "scene"},
             linked_to=[],
         )
 
@@ -496,7 +496,7 @@ class TestMultipleScenes:
             id=uuid.uuid4(),
             intent_type=IntentType.SCENE_APPLY,
             confidence=0.9,
-            entities={"scenes": [scene_entity]},
+            entities={"device": [scene_entity]},
             alternative_intents=[],
             raw_text="activate romantic scene",
             timestamp=datetime.now(),
@@ -580,7 +580,7 @@ class TestSceneNotFound:
             raw_text="nonexistent",
             normalized_value="nonexistent",
             confidence=0.9,
-            metadata={},
+            metadata={"device_type": "scene"},
             linked_to=[],
         )
 
@@ -588,7 +588,7 @@ class TestSceneNotFound:
             id=uuid.uuid4(),
             intent_type=IntentType.SCENE_APPLY,
             confidence=0.9,
-            entities={"scenes": [scene_entity]},
+            entities={"device": [scene_entity]},
             alternative_intents=[],
             raw_text="activate nonexistent scene",
             timestamp=datetime.now(),

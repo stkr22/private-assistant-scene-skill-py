@@ -148,20 +148,27 @@ class SceneSkill(commons.BaseSkill):
         """
         parameters = Parameters()
 
+        # AIDEV-NOTE: Intent classifier uses singular entity keys ("device", "room")
         # Extract rooms from entities, fallback to current room
-        room_entities = classified_intent.entities.get("rooms", [])
+        room_entities = classified_intent.entities.get("room", [])
         parameters.rooms = [room.normalized_value for room in room_entities] if room_entities else [current_room]
 
-        # Extract scene names from entities
-        scene_entities = classified_intent.entities.get("scenes", [])
-        if scene_entities:
-            parameters.scene_names = [scene.normalized_value for scene in scene_entities]
+        # Extract scene names from device entities, filtering for device_type="scene"
+        device_entities = classified_intent.entities.get("device", [])
+        if device_entities:
+            # Filter for scene-type devices only
+            scene_names = []
+            for entity in device_entities:
+                metadata = getattr(entity, "metadata", {}) or {}
+                if metadata.get("device_type") == "scene":
+                    scene_names.append(entity.normalized_value)
+            parameters.scene_names = scene_names
 
         if intent_type == IntentType.SCENE_APPLY:
             # Get scenes matching the requested names and/or rooms
             scenes = await self.get_scenes(
                 rooms=parameters.rooms if room_entities else None,
-                scene_names=parameters.scene_names if scene_entities else None,
+                scene_names=parameters.scene_names if device_entities else None,
             )
             parameters.targets = scenes
 
