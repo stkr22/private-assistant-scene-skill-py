@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.2.0](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.1.1...v2.2.0) (2025-11-23)
+
+
+### Features
+
+* update Python version to 3.13.9 and uv to 0.9.11 in Containerfile ([e656f93](https://github.com/stkr22/private-assistant-scene-skill-py/commit/e656f933cd3dc5cfc1624b4b86401290c5d2dbe9))
+* update Python version to 3.13.9 and uv to 0.9.11 in Containerfile ([5d89bc1](https://github.com/stkr22/private-assistant-scene-skill-py/commit/5d89bc1bbd34b647b73121661e4416975287c125))
+
+
+### Bug Fixes
+
+* update license to GPL-3.0-only in pyproject.toml ([4ed0fee](https://github.com/stkr22/private-assistant-scene-skill-py/commit/4ed0fee818a6e9332d64490cfe827d92dd230fa6))
+
 ## [2.1.1](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.1.0...v2.1.1) (2025-10-24)
 
 

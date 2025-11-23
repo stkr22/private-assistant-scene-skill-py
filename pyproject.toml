@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "private-assistant-scene-skill"
-version = "2.1.1"
+version = "2.2.0"
 description = "Scene Control Skill for Private Assistant: Enables automated and voice-activated scene control within smart home environments."
 authors = [
     { name = "stkr22", email = "stkr22@github.com" }
