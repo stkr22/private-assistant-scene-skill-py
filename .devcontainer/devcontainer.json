@@ -2,7 +2,7 @@
 	"name": "private-assistant-scene-skill-dev-environment",
 	"dockerComposeFile": "compose.yml",
 	"service": "dev",
-	"workspaceFolder": "/workspace",
+	"workspaceFolder": "/workspace/private-assistant-scene-skill-py",
 	"remoteUser": "vscode",
 	"customizations": {
 		"vscode": {
