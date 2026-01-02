@@ -32,7 +32,7 @@ services:
 
   # PostgreSQL database for device registry
   postgres:
-    image: docker.io/postgres:18.1-trixie
+    image: docker.io/postgres:18.1-trixie@sha256:bfe50b2b0ddd9b55eadedd066fe24c7c6fe06626185b73358c480ea37868024d
     container_name: scene-skill-postgres
     environment:
       POSTGRES_USER: assistant
@@ -48,7 +48,7 @@ services:
 
   # Eclipse Mosquitto MQTT broker
   mosquitto:
-    image: docker.io/eclipse-mosquitto:2.0.22
+    image: docker.io/eclipse-mosquitto:2.0.22@sha256:077fe4ff4c49df1e860c98335c77dda08360629e0e2a718147027e4db3eace9d
     container_name: scene-skill-mosquitto
     volumes:
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
