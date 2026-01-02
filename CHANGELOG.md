@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.0](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.2.0...v2.3.0) (2026-01-02)
+
+
+### Features
+
+* :wrench: improve development container configuration ([8c802ef](https://github.com/stkr22/private-assistant-scene-skill-py/commit/8c802efee6e1dcefd997119c84b4fc85206327e9)), closes [#51](https://github.com/stkr22/private-assistant-scene-skill-py/issues/51)
+* :zap: add database resilience with create_skill_engine ([a2abcf2](https://github.com/stkr22/private-assistant-scene-skill-py/commit/a2abcf2b5204b6d09888856db6cfc18649a086a4)), closes [#51](https://github.com/stkr22/private-assistant-scene-skill-py/issues/51)
+* modernize skill infrastructure and configuration ([2a728fe](https://github.com/stkr22/private-assistant-scene-skill-py/commit/2a728fef70ba7f706e613d5775f2d7fdf2ade2a3))
+
 ## [2.2.0](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.1.1...v2.2.0) (2025-11-23)
 
 
