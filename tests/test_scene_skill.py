@@ -33,11 +33,13 @@ def mock_template_env():
 def mock_task_group():
     """Mock task group that returns proper Task-like objects."""
     task_group = AsyncMock()
+
     # Mock create_task to return a Mock with add_done_callback
     def create_mock_task(coro, name=None):  # noqa: ARG001
         mock_task = Mock()
         mock_task.add_done_callback = Mock()
         return mock_task
+
     task_group.create_task = Mock(side_effect=create_mock_task)
     return task_group
 
