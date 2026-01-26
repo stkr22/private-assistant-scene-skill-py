@@ -69,7 +69,7 @@
       "groupSlug": "github-actions"
     },
     {
-      "description": "Separate PR for Python runtime version updates",
+      "description": "Separate PR for Python runtime version updates (patch only)",
       "matchDepNames": [
         "python"
       ],
@@ -78,6 +78,11 @@
         "docker-compose",
         "pep621"
       ],
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ],
+      "enabled": false,
       "groupName": "Python runtime",
       "groupSlug": "python-runtime"
     },
