@@ -105,11 +105,11 @@
         "dockerfile",
         "docker-compose"
       ],
-      "excludeDepNames": [
-        "python"
-      ],
       "groupName": "Docker images",
-      "groupSlug": "docker"
+      "groupSlug": "docker",
+      "matchDepNames": [
+        "!python"
+      ]
     }
   ]
 }
