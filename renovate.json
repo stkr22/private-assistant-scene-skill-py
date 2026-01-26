@@ -85,18 +85,6 @@
       "groupSlug": "copier"
     },
     {
-      "description": "Group Docker image updates (excluding Python)",
-      "matchManagers": [
-        "dockerfile",
-        "docker-compose"
-      ],
-      "groupName": "Docker images",
-      "groupSlug": "docker",
-      "matchDepNames": [
-        "!python"
-      ]
-    },
-    {
       "description": "Disable minor and major Python Docker image updates",
       "matchManagers": [
         "dockerfile",
@@ -110,6 +98,18 @@
         "major"
       ],
       "enabled": false
+    },
+    {
+      "description": "Group non-Python Docker image updates",
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "excludeDepNames": [
+        "python"
+      ],
+      "groupName": "Docker images",
+      "groupSlug": "docker"
     }
   ]
 }
