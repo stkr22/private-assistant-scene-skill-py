@@ -1,3 +1,5 @@
+"""Entry point for the scene skill application."""
+
 import asyncio
 import pathlib
 from typing import Annotated
@@ -19,12 +21,14 @@ app = typer.Typer()
 
 @app.command()
 def main(config_path: Annotated[pathlib.Path, typer.Argument(envvar="PRIVATE_ASSISTANT_CONFIG_PATH")]) -> None:
+    """Run the scene skill with the given configuration."""
     asyncio.run(start_skill(config_path))
 
 
 async def start_skill(
     config_path: pathlib.Path,
-):
+) -> None:
+    """Start the scene skill with the given configuration path."""
     # Set up logger early on
     logger = skill_logger.SkillLogger.get_logger("Private Assistant SceneSkill")
 
