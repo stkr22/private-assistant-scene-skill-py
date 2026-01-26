@@ -1,3 +1,5 @@
+"""Scene control skill for activating predefined scenes via MQTT."""
+
 import asyncio
 import logging
 
@@ -48,6 +50,7 @@ class SceneSkill(commons.BaseSkill):
             template_env: Jinja2 environment for response templates
             task_group: Async task group for concurrent operations
             logger: Logger instance for debugging and monitoring
+
         """
         # Pass engine to BaseSkill (NEW REQUIRED PARAMETER)
         super().__init__(
@@ -78,6 +81,7 @@ class SceneSkill(commons.BaseSkill):
 
         Raises:
             RuntimeError: If critical templates cannot be loaded
+
         """
         template_mappings = {
             IntentType.SYSTEM_HELP: "help.j2",
@@ -108,6 +112,7 @@ class SceneSkill(commons.BaseSkill):
 
         Returns:
             List of SceneDevice objects matching the filters
+
         """
         self.logger.info("Fetching scenes with filters - rooms: %s, names: %s", rooms, scene_names)
 
@@ -145,6 +150,7 @@ class SceneSkill(commons.BaseSkill):
 
         Returns:
             Parameters object with scenes, rooms, and targets
+
         """
         parameters = Parameters()
 
@@ -184,6 +190,7 @@ class SceneSkill(commons.BaseSkill):
 
         Returns:
             Rendered response text
+
         """
         template = self.intent_to_template.get(intent_type)
         if not template:
@@ -205,6 +212,7 @@ class SceneSkill(commons.BaseSkill):
 
         Args:
             parameters: Parameters containing target scenes to activate
+
         """
         for scene in parameters.targets:
             self.logger.info("Activating scene: %s with %d device actions", scene.name, len(scene.device_actions))
@@ -224,6 +232,7 @@ class SceneSkill(commons.BaseSkill):
 
         Args:
             intent_request: The intent request with classified intent and client request
+
         """
         classified_intent = intent_request.classified_intent
         client_request = intent_request.client_request
@@ -246,6 +255,7 @@ class SceneSkill(commons.BaseSkill):
 
         Args:
             intent_request: The intent request with classified intent and client request
+
         """
         client_request = intent_request.client_request
         current_room = client_request.room
@@ -259,7 +269,7 @@ class SceneSkill(commons.BaseSkill):
         self.add_task(self.send_response(answer, client_request=client_request))
 
     async def process_request(self, intent_request: IntentRequest) -> None:
-        """Main request processing method - routes intent to appropriate handler.
+        """Route intent request to the appropriate handler.
 
         Orchestrates the full command processing pipeline:
         1. Extract intent type from classified intent
@@ -268,6 +278,7 @@ class SceneSkill(commons.BaseSkill):
 
         Args:
             intent_request: The intent request with classified intent and client request
+
         """
         classified_intent = intent_request.classified_intent
         intent_type = classified_intent.intent_type

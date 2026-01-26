@@ -268,6 +268,7 @@ async def running_skill_single_scene(skill_config_file, test_scene_device, db_en
         skill_config_file: Path to skill config
         test_scene_device: Test scene device that must be created before skill starts
         db_engine: Database engine to verify device visibility
+
     """
     # Device is already created by test_scene_device fixture
     # Give database time to fully persist the commit
@@ -305,6 +306,7 @@ async def running_skill_multiple_scenes(skill_config_file, test_scene_devices_mu
     Args:
         skill_config_file: Path to skill config
         test_scene_devices_multiple: Test scene devices that must be created before skill starts
+
     """
     # Devices are already created by test_scene_devices_multiple fixture
     # Give database time to fully persist the commit

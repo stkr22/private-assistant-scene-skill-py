@@ -39,6 +39,7 @@ class SceneDevice(BaseModel):
 
         Raises:
             ValueError: If any action is missing a topic or has an invalid topic
+
         """
         for idx, action in enumerate(value):
             if "topic" not in action:
@@ -72,6 +73,7 @@ class SceneDevice(BaseModel):
 
         Raises:
             ValueError: If required device_attributes are missing or invalid
+
         """
         attrs = global_device.device_attributes or {}
 

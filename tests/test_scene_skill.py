@@ -94,7 +94,7 @@ async def test_scene_device_from_global_device():
 
     assert scene_device.name == "romantic"
     assert scene_device.room == "living room"
-    assert len(scene_device.device_actions) == 2  # noqa: PLR2004
+    assert len(scene_device.device_actions) == 2
     assert scene_device.device_actions[0]["topic"] == "light/1"
     assert scene_device.device_actions[0]["payload"] == "ON"
 
@@ -193,7 +193,7 @@ async def test_send_mqtt_commands(scene_skill, mock_mqtt_client):
 
     await scene_skill._send_mqtt_commands(parameters)
 
-    assert mock_mqtt_client.publish.await_count == 2  # noqa: PLR2004
+    assert mock_mqtt_client.publish.await_count == 2
     mock_mqtt_client.publish.assert_any_await("light/1", "ON", qos=1)
     mock_mqtt_client.publish.assert_any_await("light/2", "50", qos=1)
 
