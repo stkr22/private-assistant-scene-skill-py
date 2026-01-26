@@ -69,22 +69,18 @@
       "groupSlug": "github-actions"
     },
     {
-      "description": "Separate PR for Python runtime version updates (patch only)",
+      "description": "Disable minor and major Python Docker image updates",
+      "matchDatasources": [
+        "docker"
+      ],
       "matchDepNames": [
         "python"
-      ],
-      "matchManagers": [
-        "dockerfile",
-        "docker-compose",
-        "pep621"
       ],
       "matchUpdateTypes": [
         "minor",
         "major"
       ],
-      "enabled": false,
-      "groupName": "Python runtime",
-      "groupSlug": "python-runtime"
+      "enabled": false
     },
     {
       "description": "Separate PR for devcontainer updates",
