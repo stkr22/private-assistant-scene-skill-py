@@ -69,20 +69,6 @@
       "groupSlug": "github-actions"
     },
     {
-      "description": "Disable minor and major Python Docker image updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchDepNames": [
-        "python"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "major"
-      ],
-      "enabled": false
-    },
-    {
       "description": "Separate PR for devcontainer updates",
       "matchManagers": [
         "devcontainer"
@@ -99,7 +85,7 @@
       "groupSlug": "copier"
     },
     {
-      "description": "Group other Docker image updates",
+      "description": "Group Docker image updates (excluding Python)",
       "matchManagers": [
         "dockerfile",
         "docker-compose"
@@ -109,6 +95,21 @@
       "matchDepNames": [
         "!python"
       ]
+    },
+    {
+      "description": "Disable minor and major Python Docker image updates",
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ],
+      "enabled": false
     }
   ]
 }
