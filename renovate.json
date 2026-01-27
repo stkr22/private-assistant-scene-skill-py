@@ -12,7 +12,7 @@
   },
   "packageRules": [
     {
-      "description": "Automerge patch updates for stable Python dependencies",
+      "description": "Automerge patch and minor updates for stable Python dependencies",
       "matchManagers": [
         "pep621",
         "uv",
@@ -22,43 +22,12 @@
         "poetry"
       ],
       "matchUpdateTypes": [
-        "patch"
-      ],
-      "matchCurrentVersion": "!/^0/",
-      "automerge": true,
-      "groupName": "patch updates",
-      "groupSlug": "patches"
-    },
-    {
-      "description": "Group minor updates for Python dependencies only",
-      "matchManagers": [
-        "pep621",
-        "uv",
-        "pip_requirements",
-        "pip-compile",
-        "pipenv",
-        "poetry"
-      ],
-      "matchUpdateTypes": [
+        "patch",
         "minor"
       ],
       "matchCurrentVersion": "!/^0/",
-      "groupName": "minor updates",
-      "groupSlug": "minors"
-    },
-    {
-      "description": "Automerge dev dependency minor and patch updates",
-      "matchDepTypes": [
-        "dev",
-        "devDependencies"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
-      "groupName": "dev dependencies",
-      "groupSlug": "dev-deps",
-      "automerge": true
+      "automerge": true,
+      "groupName": "patch-minor-updates"
     },
     {
       "description": "Group GitHub Actions updates",
@@ -85,31 +54,15 @@
       "groupSlug": "copier"
     },
     {
-      "description": "Disable minor and major Python Docker image updates",
-      "matchManagers": [
-        "dockerfile",
-        "docker-compose"
-      ],
-      "matchDepNames": [
-        "python"
+      "description": "Disable minor and major Docker image updates",
+      "matchCategories": [
+        "docker"
       ],
       "matchUpdateTypes": [
         "minor",
         "major"
       ],
       "enabled": false
-    },
-    {
-      "description": "Group non-Python Docker image updates",
-      "matchManagers": [
-        "dockerfile",
-        "docker-compose"
-      ],
-      "excludeDepNames": [
-        "python"
-      ],
-      "groupName": "Docker images",
-      "groupSlug": "docker"
     }
   ]
 }
