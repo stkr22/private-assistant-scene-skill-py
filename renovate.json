@@ -26,7 +26,6 @@
         "minor"
       ],
       "matchCurrentVersion": "!/^0/",
-      "automerge": true,
       "groupName": "patch-minor-updates"
     },
     {
@@ -36,14 +35,6 @@
       ],
       "groupName": "GitHub Actions",
       "groupSlug": "github-actions"
-    },
-    {
-      "description": "Separate PR for devcontainer updates",
-      "matchManagers": [
-        "devcontainer"
-      ],
-      "groupName": "devcontainer",
-      "groupSlug": "devcontainer"
     },
     {
       "description": "Separate PR for Copier template updates",
@@ -59,10 +50,31 @@
         "docker"
       ],
       "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable minor and major Python Docker image updates",
+      "matchCategories": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
+      "matchUpdateTypes": [
         "minor",
         "major"
       ],
       "enabled": false
+    },
+    {
+      "description": "Separate PR for devcontainer updates",
+      "matchManagers": [
+        "devcontainer"
+      ],
+      "groupName": "devcontainer",
+      "groupSlug": "devcontainer"
     }
   ]
 }
