@@ -56,7 +56,7 @@
     },
     {
       "description": "Disable minor and major Python Docker image updates",
-      "matchCategories": [
+      "matchDatasources": [
         "docker"
       ],
       "matchPackageNames": [
