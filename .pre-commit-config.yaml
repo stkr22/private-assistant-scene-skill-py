@@ -5,7 +5,11 @@ repos:
     - id: conventional-pre-commit
       stages: [commit-msg]
       args: []
+<<<<<<< before updating
 
+=======
+  
+>>>>>>> after updating
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

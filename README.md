@@ -8,6 +8,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
+<<<<<<< before updating
 **READ THE AGENTS.md**
 
 This Home Automation Skill is a specialized module designed to integrate with a Modular Private Assistant system. It utilizes MQTT for communication to manage and control smart home devices like scenes, enhancing home automation capabilities.
@@ -29,3 +30,6 @@ This Home Automation Skill is a specialized module designed to integrate with a 
 ## Contributing
 
 Contributions are welcome! If you'd like to improve the functionality or add support for more devices, please fork the repository and submit a pull request.
+=======
+Scene Control Skill for Private Assistant: Enables automated and voice-activated scene control within smart home environments.
+>>>>>>> after updating

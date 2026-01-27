@@ -22,7 +22,7 @@
 				"mhutchie.git-graph",
 				"vivaxy.vscode-conventional-commits"
 			],
-			"settings":{
+			"settings": {
 				"files.trimFinalNewlines": true,
 				"files.trimTrailingWhitespace": true,
 				"files.insertFinalNewline": true,
