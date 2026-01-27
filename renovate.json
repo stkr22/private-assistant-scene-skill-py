@@ -59,7 +59,7 @@
       "matchCategories": [
         "docker"
       ],
-      "matchDepNames": [
+      "matchPackageNames": [
         "python"
       ],
       "matchUpdateTypes": [
