@@ -60,7 +60,7 @@
         "docker"
       ],
       "matchPackageNames": [
-        "python"
+        "library/python"
       ],
       "matchUpdateTypes": [
         "minor",
