@@ -7,19 +7,11 @@
   "schedule": [
     "* 16-19 15 * *"
   ],
-  "lockFileMaintenance": {
-    "enabled": true
-  },
   "packageRules": [
     {
       "description": "Automerge patch and minor updates for stable Python dependencies",
-      "matchManagers": [
-        "pep621",
-        "uv",
-        "pip_requirements",
-        "pip-compile",
-        "pipenv",
-        "poetry"
+      "matchCategories": [
+        "python"
       ],
       "matchUpdateTypes": [
         "patch",
@@ -34,12 +26,7 @@
     {
       "description": "No python runtime update",
       "matchManagers": [
-        "pep621",
-        "uv",
-        "pip_requirements",
-        "pip-compile",
-        "pipenv",
-        "poetry"
+        "python"
       ],
       "matchUpdateTypes": [
         "minor",
