@@ -25,7 +25,7 @@
     },
     {
       "description": "No python runtime update",
-      "matchManagers": [
+      "matchCategories": [
         "python"
       ],
       "matchUpdateTypes": [
