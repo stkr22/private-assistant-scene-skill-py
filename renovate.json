@@ -25,8 +25,31 @@
         "patch",
         "minor"
       ],
+      "matchDepNames": [
+        "!python"
+      ],
       "matchCurrentVersion": "!/^0/",
       "groupName": "patch-minor-updates"
+    },
+    {
+      "description": "No python runtime update",
+      "matchManagers": [
+        "pep621",
+        "uv",
+        "pip_requirements",
+        "pip-compile",
+        "pipenv",
+        "poetry"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
+      "enabled": false,
+      "groupName": "python-runtime"
     },
     {
       "description": "Group GitHub Actions updates",
@@ -48,19 +71,6 @@
       "description": "Disable minor and major Docker image updates",
       "matchCategories": [
         "docker"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "Disable minor and major Python Docker image updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "library/python"
       ],
       "matchUpdateTypes": [
         "minor",
