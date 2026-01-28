@@ -123,7 +123,7 @@ class SceneSkill(commons.BaseSkill):
                 continue
 
             # Filter by name if specified
-            if scene_names:
+            if scene_names is not None:
                 # Normalize names for comparison (lowercase)
                 normalized_scene_names = [name.lower() for name in scene_names]
                 if global_device.name.lower() not in normalized_scene_names:

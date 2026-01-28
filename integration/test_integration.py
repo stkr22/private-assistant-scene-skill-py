@@ -564,6 +564,102 @@ class TestMultipleScenes:
 
         assert response_received, "Response was not published"
 
+    async def test_generic_device_no_scene_activation(
+        self,
+        test_scene_devices_multiple,  # noqa: ARG002
+        test_room,
+        running_skill_multiple_scenes,  # noqa: ARG002
+        mqtt_test_client,
+    ):
+        """Test that generic device entity does NOT activate all scenes.
+
+        Regression test: device entity without device_type="scene" should
+        return error, not activate all scenes in room.
+
+        Flow:
+        1. Publish IntentRequest with device entity lacking device_type="scene"
+        2. Assert NO device commands published (no scenes activated)
+        3. Assert error response published
+        """
+        output_topic = f"test/output/{uuid.uuid4().hex}"
+
+        # Create entity for "light" - generic device, NOT a scene
+        generic_device_entity = Entity(
+            id=uuid.uuid4(),
+            type=EntityType.DEVICE,  # Generic device, not SCENE
+            raw_text="light",
+            normalized_value="light",
+            confidence=0.9,
+            metadata={},  # NO device_type="scene"
+            linked_to=[],
+        )
+
+        classified_intent = ClassifiedIntent(
+            id=uuid.uuid4(),
+            intent_type=IntentType.SCENE_APPLY,
+            confidence=0.9,
+            entities={"device": [generic_device_entity]},
+            alternative_intents=[],
+            raw_text="activate light scene",
+            timestamp=datetime.now(),
+        )
+
+        client_request = ClientRequest(
+            id=uuid.uuid4(),
+            text="activate light scene",
+            room=test_room.name,
+            output_topic=output_topic,
+        )
+
+        intent_request = IntentRequest(
+            id=uuid.uuid4(),
+            classified_intent=classified_intent,
+            client_request=client_request,
+        )
+
+        # Subscribe to all device topics and response
+        await mqtt_test_client.subscribe("test/integration/multi/#")
+        await mqtt_test_client.subscribe(output_topic)
+
+        # Publish IntentRequest
+        await mqtt_test_client.publish(
+            "assistant/intent_engine/result",
+            intent_request.model_dump_json(),
+            qos=1,
+        )
+
+        # Collect messages
+        device_commands_received = []
+        response_received = False
+        response_payload = None
+
+        async with asyncio.timeout(10):
+            async for message in mqtt_test_client.messages:
+                topic = str(message.topic)
+                payload = message.payload.decode()
+
+                # Track any device commands
+                if topic.startswith("test/integration/multi/") and topic != output_topic:
+                    device_commands_received.append(topic)
+
+                if topic == output_topic:
+                    response_payload = payload
+                    response_received = True
+                    # Wait a bit more to ensure no device commands sent
+                    await asyncio.sleep(1)
+                    break
+
+        # ASSERTIONS: No device commands should be sent
+        assert len(device_commands_received) == 0, (
+            f"Expected NO device commands for generic device entity, "
+            f"but got {len(device_commands_received)} commands: {device_commands_received}"
+        )
+
+        # Error response should be sent
+        assert response_received, "Error response should be published"
+        assert response_payload is not None
+        assert "couldn't find" in response_payload.lower()
+
 
 class TestSceneNotFound:
     """Test error handling when scene is not found."""
