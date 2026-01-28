@@ -343,3 +343,114 @@ async def test_process_request_routes_to_help(scene_skill, monkeypatch):
     await scene_skill.process_request(mock_intent_request)
 
     scene_skill._handle_system_help.assert_called_once_with(mock_intent_request)
+
+
+@pytest.mark.asyncio
+async def test_get_scenes_empty_list_filters(scene_skill):
+    """Test that empty scene_names list filters to no results.
+
+    Regression test: empty list should be treated as "filter by empty list"
+    (return nothing), while None means "don't filter" (return all).
+    """
+    # Mock global devices
+    mock_room = Mock()
+    mock_room.name = "living room"
+
+    mock_device1 = Mock()
+    mock_device1.name = "romantic"
+    mock_device1.room = mock_room
+    mock_device1.device_attributes = {"device_actions": [{"topic": "light/1", "payload": "ON"}]}
+
+    mock_device2 = Mock()
+    mock_device2.name = "morning"
+    mock_device2.room = mock_room
+    mock_device2.device_attributes = {"device_actions": [{"topic": "light/2", "payload": "ON"}]}
+
+    scene_skill.global_devices = [mock_device1, mock_device2]
+
+    # Pass empty list - should filter by empty list (return nothing)
+    scenes = await scene_skill.get_scenes(scene_names=[])
+    assert len(scenes) == 0  # No scenes match empty list
+
+    # Pass None - should not filter (return all)
+    scenes = await scene_skill.get_scenes(scene_names=None)
+    assert len(scenes) == 2  # Both scenes returned
+    scene_names = {scene.name for scene in scenes}
+    assert scene_names == {"romantic", "morning"}
+
+
+@pytest.mark.asyncio
+async def test_find_parameters_generic_device_no_match(scene_skill):
+    """Test that generic device entity results in empty targets.
+
+    Regression test: device entity without device_type="scene" should
+    not match any scenes (empty scene_names list).
+    """
+    # Mock entity without device_type="scene"
+    mock_entity = Mock()
+    mock_entity.normalized_value = "light"
+    mock_entity.metadata = {}  # No device_type
+
+    mock_classified_intent = Mock()
+    mock_classified_intent.entities = {"device": [mock_entity]}
+
+    # Setup global devices
+    mock_room = Mock()
+    mock_room.name = "living room"
+
+    mock_device1 = Mock()
+    mock_device1.name = "romantic"
+    mock_device1.room = mock_room
+    mock_device1.device_attributes = {"device_actions": [{"topic": "light/1", "payload": "ON"}]}
+
+    mock_device2 = Mock()
+    mock_device2.name = "morning"
+    mock_device2.room = mock_room
+    mock_device2.device_attributes = {"device_actions": [{"topic": "light/2", "payload": "ON"}]}
+
+    scene_skill.global_devices = [mock_device1, mock_device2]
+
+    # Extract parameters
+    parameters = await scene_skill.find_parameters(IntentType.SCENE_APPLY, mock_classified_intent, "living room")
+
+    # scene_names should be empty (no scene-type devices detected)
+    assert parameters.scene_names == []
+    # targets should be empty (no scenes matched "light")
+    assert parameters.targets == []
+
+
+@pytest.mark.asyncio
+async def test_find_parameters_scene_device_filters(scene_skill):
+    """Test that scene-type device entity properly filters scenes by name."""
+    # Mock entity WITH device_type="scene"
+    mock_entity = Mock()
+    mock_entity.normalized_value = "romantic"
+    mock_entity.metadata = {"device_type": "scene"}
+
+    mock_classified_intent = Mock()
+    mock_classified_intent.entities = {"device": [mock_entity]}
+
+    # Setup global devices
+    mock_room = Mock()
+    mock_room.name = "living room"
+
+    mock_device1 = Mock()
+    mock_device1.name = "romantic"
+    mock_device1.room = mock_room
+    mock_device1.device_attributes = {"device_actions": [{"topic": "light/1", "payload": "ON"}]}
+
+    mock_device2 = Mock()
+    mock_device2.name = "morning"
+    mock_device2.room = mock_room
+    mock_device2.device_attributes = {"device_actions": [{"topic": "light/2", "payload": "ON"}]}
+
+    scene_skill.global_devices = [mock_device1, mock_device2]
+
+    # Extract parameters
+    parameters = await scene_skill.find_parameters(IntentType.SCENE_APPLY, mock_classified_intent, "living room")
+
+    # scene_names should contain "romantic"
+    assert parameters.scene_names == ["romantic"]
+    # targets should contain only romantic scene
+    assert len(parameters.targets) == 1
+    assert parameters.targets[0].name == "romantic"
