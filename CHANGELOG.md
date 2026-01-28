@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.1](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.3.0...v2.3.1) (2026-01-28)
+
+
+### Bug Fixes
+
+* :bug: prevent all scenes activation for generic device entities ([c07d04f](https://github.com/stkr22/private-assistant-scene-skill-py/commit/c07d04f6be3d98698946d9c007d15e17546b2551))
+* :bug: prevent all scenes activation for generic device entities ([1726c7b](https://github.com/stkr22/private-assistant-scene-skill-py/commit/1726c7bcbb842c1f041dc39d50224a06513a3ab0))
+* **deps:** update patch-minor-updates ([#62](https://github.com/stkr22/private-assistant-scene-skill-py/issues/62)) ([50035ea](https://github.com/stkr22/private-assistant-scene-skill-py/commit/50035eac2193c612775926fc391246b1b5888db0))
+
 ## [2.3.0](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.2.0...v2.3.0) (2026-01-02)
 
 
