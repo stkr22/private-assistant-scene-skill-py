@@ -32,6 +32,8 @@ class SceneSkill(commons.BaseSkill):
     Integrates with global device registry for scene discovery and management.
     """
 
+    help_text = "This skill can help you activate scenes. "
+
     def __init__(  # noqa: PLR0913
         self,
         config_obj: commons.SkillConfig,
@@ -67,7 +69,6 @@ class SceneSkill(commons.BaseSkill):
         # AIDEV-NOTE: Intent-based configuration replaces calculate_certainty method
         self.supported_intents = {
             IntentType.SCENE_APPLY: 0.8,  # "activate romantic scene"
-            IntentType.SYSTEM_HELP: 0.7,  # "how do I use scenes?"
         }
 
         # AIDEV-NOTE: Device types this skill can control
@@ -84,7 +85,6 @@ class SceneSkill(commons.BaseSkill):
 
         """
         template_mappings = {
-            IntentType.SYSTEM_HELP: "help.j2",
             IntentType.SCENE_APPLY: "apply.j2",
         }
 
@@ -250,24 +250,6 @@ class SceneSkill(commons.BaseSkill):
         self.add_task(self.send_response(answer, client_request=client_request))
         self.add_task(self._send_mqtt_commands(parameters))
 
-    async def _handle_system_help(self, intent_request: IntentRequest) -> None:
-        """Handle SYSTEM_HELP intent - show help information.
-
-        Args:
-            intent_request: The intent request with classified intent and client request
-
-        """
-        client_request = intent_request.client_request
-        current_room = client_request.room
-
-        # Build empty parameters for help template
-        parameters = Parameters()
-        parameters.rooms = [current_room]
-
-        # Send response
-        answer = self._render_response(IntentType.SYSTEM_HELP, parameters)
-        self.add_task(self.send_response(answer, client_request=client_request))
-
     async def process_request(self, intent_request: IntentRequest) -> None:
         """Route intent request to the appropriate handler.
 
@@ -292,8 +274,6 @@ class SceneSkill(commons.BaseSkill):
         # Route to appropriate handler
         if intent_type == IntentType.SCENE_APPLY:
             await self._handle_scene_apply(intent_request)
-        elif intent_type == IntentType.SYSTEM_HELP:
-            await self._handle_system_help(intent_request)
         else:
             self.logger.warning("Unsupported intent type: %s", intent_type)
             await self.send_response(

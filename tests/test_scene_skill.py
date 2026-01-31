@@ -276,30 +276,6 @@ async def test_handle_scene_apply_not_found(scene_skill, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_handle_system_help(scene_skill, monkeypatch):
-    """Test SYSTEM_HELP intent handling."""
-    mock_classified_intent = Mock()
-    mock_classified_intent.intent_type = IntentType.SYSTEM_HELP
-    mock_classified_intent.confidence = 0.9
-
-    mock_client_request = Mock()
-    mock_client_request.room = "living room"
-
-    mock_intent_request = Mock(spec=IntentRequest)
-    mock_intent_request.id = uuid4()
-    mock_intent_request.classified_intent = mock_classified_intent
-    mock_intent_request.client_request = mock_client_request
-
-    # Mock methods
-    monkeypatch.setattr(scene_skill, "send_response", AsyncMock())
-    monkeypatch.setattr(scene_skill, "_render_response", Mock(return_value="Help text"))
-
-    await scene_skill._handle_system_help(mock_intent_request)
-
-    scene_skill.send_response.assert_called_once()
-
-
-@pytest.mark.asyncio
 async def test_process_request_routes_to_scene_apply(scene_skill, monkeypatch):
     """Test that process_request routes SCENE_APPLY to correct handler."""
     mock_classified_intent = Mock()
@@ -320,29 +296,6 @@ async def test_process_request_routes_to_scene_apply(scene_skill, monkeypatch):
     await scene_skill.process_request(mock_intent_request)
 
     scene_skill._handle_scene_apply.assert_called_once_with(mock_intent_request)
-
-
-@pytest.mark.asyncio
-async def test_process_request_routes_to_help(scene_skill, monkeypatch):
-    """Test that process_request routes SYSTEM_HELP to correct handler."""
-    mock_classified_intent = Mock()
-    mock_classified_intent.intent_type = IntentType.SYSTEM_HELP
-    mock_classified_intent.confidence = 0.9
-
-    mock_client_request = Mock()
-    mock_client_request.room = "living room"
-
-    mock_intent_request = Mock(spec=IntentRequest)
-    mock_intent_request.id = uuid4()
-    mock_intent_request.classified_intent = mock_classified_intent
-    mock_intent_request.client_request = mock_client_request
-
-    # Mock handler
-    monkeypatch.setattr(scene_skill, "_handle_system_help", AsyncMock())
-
-    await scene_skill.process_request(mock_intent_request)
-
-    scene_skill._handle_system_help.assert_called_once_with(mock_intent_request)
 
 
 @pytest.mark.asyncio
