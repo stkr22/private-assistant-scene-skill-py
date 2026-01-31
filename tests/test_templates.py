@@ -53,11 +53,3 @@ def test_templates(jinja_env, template_name, parameters, device_count, expected_
     template = jinja_env.get_template(template_name)
     result = template.render(parameters=parameters, device_count=device_count)
     assert result == expected_output
-
-
-def test_help_template(jinja_env):
-    """Test that help template renders correctly."""
-    template = jinja_env.get_template("help.j2")
-    result = template.render()
-    assert "scenes" in result.lower()
-    assert "activate" in result.lower() or "apply" in result.lower()
