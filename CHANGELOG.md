@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.0](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.3.1...v2.4.0) (2026-01-31)
+
+
+### Features
+
+* :arrow_up: migrate to class-level help_text, remove SYSTEM_HELP intent handling ([b2421e3](https://github.com/stkr22/private-assistant-scene-skill-py/commit/b2421e36c4a22df04ac3eff217d19b120bcbda33))
+* :arrow_up: migrate to class-level help_text, remove SYSTEM_HELP intent handling ([302dbd4](https://github.com/stkr22/private-assistant-scene-skill-py/commit/302dbd496ce318b7f47c2feb1123df02a1c36fc3))
+
 ## [2.3.1](https://github.com/stkr22/private-assistant-scene-skill-py/compare/v2.3.0...v2.3.1) (2026-01-28)
 
 
